@@ -24,8 +24,7 @@ async def run(message, chunk_size, encoding_scheme):
     nats_url = os.getenv("NATS_SURVEYOR_SERVERS", "nats://nats:4222")
     await nc.connect(nats_url)
 
-    encoded_message = encode_message(message, encoding_scheme)
-    chunks = [encoded_message[i:i+chunk_size] for i in range(0, len(encoded_message), chunk_size)]
+    chunks = [encode_message(message[i:i+chunk_size], encoding_scheme) for i in range(0, len(message), chunk_size)]
     print(f"Total {len(chunks)} chunks created, each chunk size up to {chunk_size} bytes.")
 
     chunk_index = 0
