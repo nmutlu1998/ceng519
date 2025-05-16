@@ -1,21 +1,15 @@
 import asyncio
 from nats.aio.client import Client as NATS
 import os
-import random
 from scapy.all import Ether, IP, UDP, DNS, DNSQR
-import time
-import pickle
 import argparse
-import base64
-import codecs
 from detector import Detector
 import time
 from collections import defaultdict
 
-# Track timestamps of malign access per domain/IP
 throttle_tracker = defaultdict(list)
-THROTTLE_LIMIT = 5  # max 5 malign requests
-TIME_WINDOW = 60    # in seconds
+THROTTLE_LIMIT = 5
+TIME_WINDOW = 60
 
 ml_model = Detector()
 
@@ -28,7 +22,7 @@ def is_throttled(source):
     throttle_tracker[source].append(now)
     return False
 
-async def run(message, chunk_size, encoding_scheme):
+async def run():
 
     nc = NATS()
     nats_url = os.getenv("NATS_SURVEYOR_SERVERS", "nats://nats:4222")
@@ -49,13 +43,14 @@ async def run(message, chunk_size, encoding_scheme):
 
                     print(f"DNS Query ID: {dns_id}, Requested Domain: {domain}")
                     result = ml_model.predict(domain)
-                    print(f"Subdomain: {subdomain} result ", result)
-                    if result[0] != 0:
-                        if is_throttled(domain):  # or source IP
-                            print(f"Rate limit exceeded for {domain}")
-                            # drop, delay, or flag request
+
+                    if result != 0 and packet.haslayer(IP):
+                        src_ip = packet[IP].src
+                        if is_throttled(src_ip):
+                            print(f"Dropping the packet as rate limit exceeded for {domain}")
+                            return
                         else:
-                            print(f"Malign request from {domain}, logged")
+                            print(f"Malign request from {src_ip}, domain {domain}, logged")
 
         if subject == "inpktsec":
             await nc.publish("outpktinsec", bytes(packet))
@@ -77,3 +72,4 @@ async def run(message, chunk_size, encoding_scheme):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="DNS Covert Channel Encoder")
+    asyncio.run(run())

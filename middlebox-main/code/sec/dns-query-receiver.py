@@ -15,7 +15,6 @@ def start_dns_listener():
         if dns.qr == 0 and dns.qd is not None:
             qname = dns.qd.qname.decode()
             transaction_id = dns.id
-            # respond back with same dns.id to calculate rtt time in processor
             dns_response = DNS(
                 id=transaction_id,
                 qr=1,

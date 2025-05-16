@@ -1,11 +1,6 @@
-import subprocess
 import argparse
 import time
 from scapy.all import Ether, IP, UDP, DNS, DNSQR, sendp
-import asyncio
-from nats.aio.client import Client as NATS
-import os
-import random
 import base64
 import codecs
 
