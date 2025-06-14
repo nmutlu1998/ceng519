@@ -2,14 +2,15 @@ import pickle
 import pandas as pd
 import math
 from collections import Counter
+import os
 
 MAX_TOTAL_LENGTH = 253
 MAX_LABEL_LENGTH = 63
-
+model_path = os.path.join(os.path.dirname(__file__), 'random_forest_model.pkl')
 
 class Detector:
     def __init__(self):
-        with open('./models/random_forest_model.pkl', 'rb') as file:
+        with open(model_path, 'rb') as file:
             self.model = pickle.load(file)
 
     def calculate_entropy(self, s):
